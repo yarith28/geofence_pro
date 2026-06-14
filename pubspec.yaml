@@ -1,0 +1,31 @@
+name: smart_geofence
+description: "Smart geofencing layer over native_geofence: proximity-aware GPS escalation, activity gating, FencePulse, and reconcile — battery efficient, Android-focused."
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.10.9
+  flutter: '>=3.3.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plugin_platform_interface: ^2.0.2
+  native_geofence:
+    git:
+      url: https://github.com/yarith28/native_geofence.git
+      ref: 95055baa546e572ca9785d1ba1f1f03dab5638a9
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+# The smart native layers are Android-only. iOS/other platforms are served by the
+# native_geofence dependency directly (pass-through at the Dart layer).
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.yarithdev.smart_geofence
+        pluginClass: SmartGeofencePlugin

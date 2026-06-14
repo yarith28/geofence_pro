@@ -1,0 +1,93 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Needed by BootReceiver for reboot recovery (normal permission). -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+
+    <!--
+      Runtime Location and Activity Recognition permissions are intentionally NOT
+      declared here, so consumers aren't forced to inherit them:
+        - ACCESS_FINE_LOCATION + ACCESS_BACKGROUND_LOCATION: required for the
+          proximity layer; the app must declare + request them (as it already
+          does for geofencing). The proximity layer skips if not granted.
+        - ACTIVITY_RECOGNITION: optional, only for the motion-gate battery
+          optimization. The motion gate no-ops if not granted.
+      Foreground-service permissions are declared for the Android foreground
+      confirm service. See README for the alarm-only FencePulse behavior.
+    -->
+
+    <application>
+        <!-- native_geofence's required components, declared here so smart_geofence
+             is a single-entry wrapper: the geofence-event receiver makes the OS
+             API deliver events, and the reboot receiver re-registers the OS
+             fences after a restart (Android doesn't retain them). If you also
+             declared these for native_geofence directly, you can remove them. -->
+        <receiver
+            android:name="com.chunkytofustudios.native_geofence.receivers.NativeGeofenceBroadcastReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="com.chunkytofustudios.native_geofence.receivers.NativeGeofenceRebootBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Coarse proximity stream: wakes even when the app process is dead. -->
+        <receiver
+            android:name=".proximity.ProximityReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Foreground-service bridges for precise confirms and callback work. -->
+        <service
+            android:name=".proximity.LocationConfirmService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+        <service
+            android:name=".fgs.CallbackForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+        <receiver
+            android:name=".proximity.LocationConfirmLaunchReceiver"
+            android:enabled="true"
+            android:exported="false" />
+        <receiver
+            android:name=".fgs.ForegroundServiceLaunchReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Optional light FencePulse pulse. It does not start a foreground service. -->
+        <receiver
+            android:name=".fencepulse.FencePulseAlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Activity Recognition transition updates (motion gate). -->
+        <receiver
+            android:name=".motion.MotionReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Re-arm the smart layers after reboot / app update. -->
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Optional exact-alarm reconcile watchdog. Used only when configured. -->
+        <receiver
+            android:name=".work.ReconcileAlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+    </application>
+</manifest>
